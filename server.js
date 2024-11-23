@@ -30,11 +30,11 @@ const verifyToken = (req,res,next) =>{
   const token = authorization.split(' ')[1];
 
   jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,decoded) =>{
-//     // error
+    // error
     if(err){
       return res.status(401).send({message: 'Unauthorized'})
     }
-//     // When Token is Valid
+    // When Token is Valid
     console.log('Value in the Token',decoded)
     req.decoded = decoded 
     next()
@@ -61,13 +61,17 @@ const client = new MongoClient(url,{
     serverApi:{
         version:ServerApiVersion.v1,
         strict:true,
-        deprecationErrors:true
+        deprecationErrors:true,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        tlsAllowInvalidCertificates: true,
+        serverSelectionTimeoutMS: 500000, // 50 seconds
     }
 });
 
 
-const userCollection = client.db('project_name').collection("users")
-const productCollection = client.db('project_name').collection("products")
+const userCollection = client.db('EkSheba').collection("users")
+const productCollection = client.db('EkSheba').collection("products")
 
 
 
@@ -83,36 +87,31 @@ const dbConnect = async () =>{
             res.send(user)
         })
 
-
-
         // Insert user Data
         app.post("/users",async(req,res)=>{
             const user = req.body;
-
             // Check Already user have account or not
             const query = {email: user.email}
             const existingUser = await userCollection.findOne(query)
-
             if(existingUser){
                 return res.send({massage: "User already exist"})
             }
-
             const result = await userCollection.insertOne(user);
             res.send(result);
             console.log(user)
         })
 
         // Add Product
-    app.post("/addProducts",verifyToken,verifySeller, async(req,res)=>{
-    const product = req.body
-    const result = await productCollection.insertOne(product)
-    res.send(result)
-    })
+        app.post("/addProducts",verifyToken,verifySeller, async(req,res)=>{
+            const product = req.body
+            const result = await productCollection.insertOne(product)
+            res.send(result)
+        })
 
-    // Get Products
-    app.get("/allProducts", async(req,res)=>{
+        // Get Products
+        app.get("/allProducts", async(req,res)=>{
         
-    })
+        })
 
 
     } catch(error){
@@ -130,14 +129,12 @@ app.get('/',(req,res)=>{
 
 
 // Auth Related Work
-app.post('/jwt', async(req,res)=>{
-   const userEmail = req.body;
-//   console.log(user)
-  // Create Token
-  const token = jwt.sign( userEmail , process.env.ACCESS_TOKEN_SECRET,{expiresIn:'1d'});
-
-  res.send({token})
-})
+// app.post('/jwt', async(req,res)=>{
+//    const userEmail = req.body;
+//   // Create Token
+//   const token = jwt.sign( userEmail , process.env.ACCESS_TOKEN_SECRET,{expiresIn:'10d'});
+//   res.send({token})
+// })
 
 
 app.listen(port,()=>{
